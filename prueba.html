@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+.hidden{
+
+display:none;
+
+}
+
+body{
+
+font-family:Arial;
+padding:20px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div id="auth">
+
+<h2>Login CRM</h2>
+
+<input id="email" placeholder="Email">
+
+<input id="pass" type="password" placeholder="Password">
+
+<br><br>
+
+<button id="crear">Crear Cuenta</button>
+
+<button id="entrar">Entrar</button>
+
+</div>
+
+
+
+<div id="crm" class="hidden">
+
+<h2>Clientes</h2>
+
+<button id="logout">Cerrar sesión</button>
+
+<hr>
+
+<input id="nombre" placeholder="Nombre">
+
+<input id="telefono" placeholder="Telefono">
+
+<input id="negocio" placeholder="Negocio">
+
+<button id="guardar">Guardar</button>
+
+<ul id="lista"></ul>
+
+</div>
+
+
+
+<script>
+
+const SUPABASE_URL="https://lxfygiovlcxthylkihqb.supabase.co";
+
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZnlnaW92bGN4dGh5bGtpaHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MzU4NDYsImV4cCI6MjA4NzExMTg0Nn0.bN2Pn4wFmDvYqcTgxDnB-aY1WfLWi6hRjttX-5ILaa4";
+
+const supabase =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+
+
+
+// revisar sesión
+
+check();
+
+async function check(){
+
+const {data:{session}}=
+await supabase.auth.getSession();
+
+if(session){
+
+mostrar();
+
+cargar();
+
+}
+
+}
+
+
+
+document.getElementById("crear")
+.onclick = crearCuenta;
+
+document.getElementById("entrar")
+.onclick = login;
+
+document.getElementById("logout")
+.onclick = cerrar;
+
+document.getElementById("guardar")
+.onclick = guardar;
+
+
+
+async function crearCuenta(){
+
+const email=document.getElementById("email").value;
+
+const pass=document.getElementById("pass").value;
+
+const {error}=await supabase.auth.signUp({
+
+email,
+
+password:pass
+
+});
+
+if(error){
+
+alert(error.message);
+
+}else{
+
+alert("Cuenta creada revisa correo");
+
+}
+
+}
+
+
+
+async function login(){
+
+const email=document.getElementById("email").value;
+
+const pass=document.getElementById("pass").value;
+
+const {error}=await supabase.auth.signInWithPassword({
+
+email,
+
+password:pass
+
+});
+
+if(error){
+
+alert(error.message);
+
+}else{
+
+mostrar();
+
+cargar();
+
+}
+
+}
+
+
+
+function mostrar(){
+
+auth.classList.add("hidden");
+
+crm.classList.remove("hidden");
+
+}
+
+
+
+async function cerrar(){
+
+await supabase.auth.signOut();
+
+location.reload();
+
+}
+
+
+
+async function guardar(){
+
+const {data:{user}}=
+await supabase.auth.getUser();
+
+await supabase
+.from("clientes")
+.insert({
+
+user_id:user.id,
+
+nombre:nombre.value,
+
+telefono:telefono.value,
+
+negocio:negocio.value,
+
+estado:"nuevo"
+
+});
+
+cargar();
+
+}
+
+
+
+async function cargar(){
+
+const {data}=await supabase
+.from("clientes")
+.select("*");
+
+lista.innerHTML="";
+
+data.forEach(c=>{
+
+lista.innerHTML+=`
+<li>
+
+${c.nombre}
+
+ ${c.telefono}
+
+ ${c.negocio}
+
+</li>
+
+`;
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>
