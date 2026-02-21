@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html>
-
 <head>
+<title>CRM SaaS</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
-.hidden{
-
-display:none;
-
-}
-
 body{
-
 font-family:Arial;
 padding:20px;
+background:#f2f2f2;
+}
 
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:10px;
+}
+
+#crm{
+display:none;
 }
 
 </style>
@@ -26,63 +30,46 @@ padding:20px;
 
 <body>
 
+<div class="card" id="auth">
 
-<div id="auth">
+<h2>Crear cuenta</h2>
 
-<h2>Login CRM</h2>
+<input id="email" placeholder="correo">
 
-<input id="email" placeholder="Email">
-
-<input id="pass" type="password" placeholder="Password">
+<input id="password" type="password" placeholder="password">
 
 <br><br>
 
-<button id="crear">Crear Cuenta</button>
+<button onclick="signup()">Crear cuenta</button>
 
-<button id="entrar">Entrar</button>
+<button onclick="login()">Ingresar</button>
 
 </div>
 
+<div id="crm" class="card">
 
+<h2>CRM PRIVADO</h2>
 
-<div id="crm" class="hidden">
+<input id="cliente" placeholder="nombre cliente">
 
-<h2>Clientes</h2>
-
-<button id="logout">Cerrar sesión</button>
-
-<hr>
-
-<input id="nombre" placeholder="Nombre">
-
-<input id="telefono" placeholder="Telefono">
-
-<input id="negocio" placeholder="Negocio">
-
-<button id="guardar">Guardar</button>
+<button onclick="guardar()">Guardar cliente</button>
 
 <ul id="lista"></ul>
 
+<button onclick="logout()">Cerrar sesión</button>
+
 </div>
-
-
 
 <script>
 
-const SUPABASE_URL="https://lxfygiovlcxthylkihqb.supabase.co";
+const SUPABASE_URL="AQUI TU URL";
 
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZnlnaW92bGN4dGh5bGtpaHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MzU4NDYsImV4cCI6MjA4NzExMTg0Nn0.bN2Pn4wFmDvYqcTgxDnB-aY1WfLWi6hRjttX-5ILaa4";
+const SUPABASE_KEY="AQUI TU API KEY";
 
-const supabase =
-window.supabase.createClient(
+const supabase=window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_KEY
 );
-
-
-
-
-// revisar sesión
 
 check();
 
@@ -93,41 +80,34 @@ await supabase.auth.getSession();
 
 if(session){
 
-mostrar();
+mostrarCRM();
+
+}
+
+}
+
+function mostrarCRM(){
+
+document.getElementById("auth").style.display="none";
+
+document.getElementById("crm").style.display="block";
 
 cargar();
 
 }
 
-}
+async function signup(){
 
+const email=
+document.getElementById("email").value;
 
-
-document.getElementById("crear")
-.onclick = crearCuenta;
-
-document.getElementById("entrar")
-.onclick = login;
-
-document.getElementById("logout")
-.onclick = cerrar;
-
-document.getElementById("guardar")
-.onclick = guardar;
-
-
-
-async function crearCuenta(){
-
-const email=document.getElementById("email").value;
-
-const pass=document.getElementById("pass").value;
+const password=
+document.getElementById("password").value;
 
 const {error}=await supabase.auth.signUp({
 
 email,
-
-password:pass
+password
 
 });
 
@@ -143,19 +123,18 @@ alert("Cuenta creada revisa correo");
 
 }
 
-
-
 async function login(){
 
-const email=document.getElementById("email").value;
+const email=
+document.getElementById("email").value;
 
-const pass=document.getElementById("pass").value;
+const password=
+document.getElementById("password").value;
 
 const {error}=await supabase.auth.signInWithPassword({
 
 email,
-
-password:pass
+password
 
 });
 
@@ -165,27 +144,13 @@ alert(error.message);
 
 }else{
 
-mostrar();
-
-cargar();
+mostrarCRM();
 
 }
 
 }
 
-
-
-function mostrar(){
-
-auth.classList.add("hidden");
-
-crm.classList.remove("hidden");
-
-}
-
-
-
-async function cerrar(){
+async function logout(){
 
 await supabase.auth.signOut();
 
@@ -193,26 +158,20 @@ location.reload();
 
 }
 
-
-
 async function guardar(){
 
-const {data:{user}}=
+const nombre=
+document.getElementById("cliente").value;
+
+const user=
 await supabase.auth.getUser();
 
 await supabase
 .from("clientes")
 .insert({
 
-user_id:user.id,
-
-nombre:nombre.value,
-
-telefono:telefono.value,
-
-negocio:negocio.value,
-
-estado:"nuevo"
+nombre:nombre,
+user_id:user.data.user.id
 
 });
 
@@ -220,30 +179,25 @@ cargar();
 
 }
 
-
-
 async function cargar(){
+
+const user=
+await supabase.auth.getUser();
 
 const {data}=await supabase
 .from("clientes")
-.select("*");
+.select("*")
+.eq("user_id",user.data.user.id);
+
+const lista=
+document.getElementById("lista");
 
 lista.innerHTML="";
 
 data.forEach(c=>{
 
-lista.innerHTML+=`
-<li>
-
-${c.nombre}
-
- ${c.telefono}
-
- ${c.negocio}
-
-</li>
-
-`;
+lista.innerHTML+=
+"<li>"+c.nombre+"</li>";
 
 });
 
@@ -254,3 +208,4 @@ ${c.nombre}
 </body>
 
 </html>
+
